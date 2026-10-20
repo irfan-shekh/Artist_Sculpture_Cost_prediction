@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SculptPrice AI — Art Sculpture Cost & Appraisal Engine</title>
+    <meta name="description" content="Professional Machine Learning appraisal engine predicting fair market total costs for custom artist sculptures using Random Forest regression.">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-base: #07090E;
+            --bg-surface: rgba(16, 21, 33, 0.75);
+            --bg-card: rgba(22, 29, 46, 0.65);
+            --bg-input: rgba(11, 15, 25, 0.85);
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --border-gold: rgba(217, 119, 6, 0.4);
+            
+            --gold: #F59E0B;
+            --gold-light: #FCD34D;
+            --bronze: #D97706;
+            --bronze-glow: rgba(245, 158, 11, 0.25);
+            --emerald: #10B981;
+            --cyan: #06B6D4;
+            --violet: #8B5CF6;
+            --crimson: #EF4444;
+
+            --text-primary: #F8FAFC;
+            --text-secondary: #94A3B8;
+            --text-muted: #64748B;
+
+            --font-serif: 'Cinzel', serif;
+            --font-display: 'Outfit', -apple-system, sans-serif;
+            --font-body: 'Plus Jakarta Sans', -apple-system, sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 15% 10%, rgba(245, 158, 11, 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 85% 15%, rgba(139, 92, 246, 0.1) 0%, transparent 40%),
+                radial-gradient(circle at 50% 85%, rgba(6, 182, 212, 0.08) 0%, transparent 50%);
+            background-attachment: fixed;
+        }
+
+        .container {
+            max-width: 1220px;
+            margin: 0 auto;
+            padding: 30px 20px 70px;
+        }
+
+        /* Top Bar */
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 26px;
+            margin-bottom: 35px;
+            border-radius: 16px;
+            background: rgba(16, 21, 33, 0.6);
+            backdrop-filter: blur(14px);
+            border: 1px solid var(--border-subtle);
+        }
+
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            text-decoration: none;
+            color: var(--text-primary);
+        }
+
+        .brand-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--bronze) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            color: #451a03;
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.35);
+        }
+
+        .brand-title {
+            font-family: var(--font-serif);
+            font-size: 1.35rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .brand-subtitle {
+            font-size: 0.72rem;
+            color: var(--gold);
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .header-badges {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .stat-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-subtle);
+            border-radius: 999px;
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+        }
+
+        .stat-badge i {
+            color: var(--gold);
+        }
+
+        /* Hero */
+        .hero {
+            text-align: center;
+            margin-bottom: 35px;
+        }
+
+        .hero h1 {
+            font-family: var(--font-serif);
+            font-size: 2.75rem;
+            font-weight: 700;
+            line-height: 1.25;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #FFFFFF 0%, #FDE68A 50%, #D97706 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        .hero p {
+            font-size: 1.05rem;
+            color: var(--text-secondary);
+            max-width: 680px;
+            margin: 0 auto;
+        }
+
+        /* Presets & Controls Bar */
+        .controls-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            padding: 16px 24px;
+            margin-bottom: 30px;
+            background: rgba(16, 21, 33, 0.5);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+        }
+
+        .preset-buttons {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .preset-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-right: 4px;
+        }
+
+        .btn-preset {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid var(--border-subtle);
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--text-primary);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-preset:hover {
+            transform: translateY(-1px);
+            background: rgba(245, 158, 11, 0.15);
+            border-color: var(--gold);
+            color: var(--gold-light);
+        }
+
+        .btn-preset.reset-preset:hover {
+            background: rgba(148, 163, 184, 0.15);
+            border-color: var(--text-secondary);
+            color: var(--text-primary);
+        }
+
+        .progress-indicator {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 240px;
+        }
+
+        .progress-text {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        .progress-bar-container {
+            flex: 1;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--gold) 0%, var(--bronze) 100%);
+            border-radius: 999px;
+            transition: width 0.3s ease;
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+        }
+
+        /* Result Section */
+        .result-section {
+            margin-bottom: 35px;
+            display: none;
+            animation: slideDown 0.4s ease-out;
+        }
+
+        .result-section.active {
+            display: block;
+        }
+
+        .result-box {
+            padding: 35px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, rgba(30, 23, 11, 0.95) 0%, rgba(16, 21, 33, 0.95) 100%);
+            border: 2px solid var(--gold);
+            box-shadow: 0 0 45px rgba(245, 158, 11, 0.25);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .result-content-grid {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .result-icon-bubble {
+            width: 90px;
+            height: 90px;
+            border-radius: 24px;
+            background: rgba(245, 158, 11, 0.15);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.75rem;
+            color: var(--gold-light);
+            box-shadow: 0 0 25px rgba(245, 158, 11, 0.3);
+        }
+
+        .result-title {
+            font-family: var(--font-serif);
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--gold-light);
+            margin-bottom: 6px;
+        }
+
+        .result-details {
+            color: #CBD5E1;
+            font-size: 0.95rem;
+            max-width: 600px;
+        }
+
+        .result-stats-pill {
+            text-align: right;
+            padding: 16px 28px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 16px;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .cost-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--gold);
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+
+        .cost-val {
+            font-family: var(--font-display);
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #FFFFFF;
+            letter-spacing: -0.5px;
+        }
+
+        /* Form Layout */
+        .form-category-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 25px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-category-card:hover {
+            border-color: rgba(255, 255, 255, 0.14);
+        }
+
+        .category-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 22px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .category-header i {
+            font-size: 1.3rem;
+            color: var(--gold);
+        }
+
+        .category-header h3 {
+            font-family: var(--font-display);
+            font-size: 1.35rem;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+
+        .category-badge {
+            margin-left: auto;
+            font-size: 0.75rem;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .fields-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 20px;
+        }
+
+        .field-card {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .field-card label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: #CBD5E1;
+        }
+
+        .field-card label span.req-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--crimson);
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .field-card label span.req-dot.filled {
+            background: var(--emerald);
+            box-shadow: 0 0 6px var(--emerald);
+        }
+
+        .input-wrapper, .select-wrapper {
+            position: relative;
+        }
+
+        .input-wrapper input, .select-wrapper select {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            font-family: inherit;
+            outline: none;
+            transition: all 0.25s ease;
+        }
+
+        .select-wrapper select {
+            padding-right: 38px;
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+
+        .input-wrapper input:hover, .select-wrapper select:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .input-wrapper input:focus, .select-wrapper select:focus {
+            border-color: var(--gold);
+            box-shadow: 0 0 0 3px var(--bronze-glow);
+            background-color: #0F1626;
+        }
+
+        .select-wrapper select option {
+            background: #0F172A;
+            color: #F8FAFC;
+            padding: 8px;
+        }
+
+        .select-wrapper i.arrow-icon {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            pointer-events: none;
+            font-size: 0.8rem;
+            transition: transform 0.2s ease;
+        }
+
+        .select-wrapper select:focus + i.arrow-icon {
+            transform: translateY(-50%) rotate(180deg);
+            color: var(--gold);
+        }
+
+        /* Action Dock */
+        .action-dock {
+            position: sticky;
+            bottom: 20px;
+            margin-top: 35px;
+            padding: 18px 28px;
+            background: rgba(16, 21, 33, 0.85);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(245, 158, 11, 0.25);
+            border-radius: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+            z-index: 100;
+        }
+
+        .dock-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .dock-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--gold);
+            box-shadow: 0 0 10px var(--gold);
+        }
+
+        .dock-indicator.ready {
+            background: var(--emerald);
+            box-shadow: 0 0 10px var(--emerald);
+        }
+
+        .dock-text {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .dock-text strong {
+            color: var(--text-primary);
+        }
+
+        .submit-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 36px;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--bronze) 100%);
+            color: #451a03;
+            border: none;
+            border-radius: 14px;
+            font-family: var(--font-display);
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 0 25px rgba(245, 158, 11, 0.4);
+            transition: all 0.25s ease;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 35px rgba(245, 158, 11, 0.6);
+            background: linear-gradient(135deg, #FDE68A 0%, var(--gold) 100%);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .toast-alert {
+            padding: 14px 20px;
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid var(--crimson);
+            border-radius: 12px;
+            color: #FCA5A5;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.95rem;
+        }
+
+        .app-footer {
+            margin-top: 55px;
+            padding-top: 25px;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 900px) {
+            .result-content-grid {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+            .result-icon-bubble {
+                margin: 0 auto;
+            }
+            .result-stats-pill {
+                text-align: center;
+            }
+            .action-dock {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .submit-btn {
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .app-header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            .hero h1 {
+                font-size: 2rem;
+            }
+            .controls-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .preset-buttons {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Header -->
+    <header class="app-header">
+        <a href="/" class="brand-logo">
+            <div class="brand-icon">
+                <i class="fa-solid fa-gem"></i>
+            </div>
+            <div>
+                <div class="brand-title">SculptPrice AI</div>
+                <div class="brand-subtitle">Art Sculpture Valuation Engine</div>
+            </div>
+        </a>
+        <div class="header-badges">
+            <div class="stat-badge">
+                <i class="fa-solid fa-chart-line"></i> 84.2% Test R² Accuracy
+            </div>
+            <div class="stat-badge">
+                <i class="fa-solid fa-layer-group"></i> Random Forest (200 Trees)
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Title -->
+    <section class="hero">
+        <h1>Art & Sculpture Cost Appraisal</h1>
+        <p>Predict fair market sculpture production, logistics, and total procurement costs using machine learning trained on historical artist appraisal records.</p>
+    </section>
+
+    <!-- Error Alert if any -->
+    {% if error %}
+    <div class="toast-alert" id="serverAlert">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <span>{{ error }}</span>
+    </div>
+    {% endif %}
+
+    <!-- Prediction Result Display -->
+    <section class="result-section {% if response %}active{% endif %}" id="resultContainer">
+        <div class="result-box" id="resultBox">
+            <div class="result-content-grid">
+                <div class="result-icon-bubble">
+                    <i class="fa-solid fa-award"></i>
+                </div>
+                <div>
+                    <h2 class="result-title" id="resultTitle">Appraisal Estimation Complete</h2>
+                    <p class="result-details" id="resultDescription">
+                        Based on the artist reputation score, materials, physical dimensions, transit factors, and handling complexity, the Random Forest ensemble computed the estimated total procurement cost.
+                    </p>
+                </div>
+                <div class="result-stats-pill">
+                    <div class="cost-label">Estimated Total Cost</div>
+                    <div class="cost-val" id="resultValue">
+                        {% if response %}${{ response|floatformat:2 }}{% else %}$0.00{% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Controls Bar -->
+    <div class="controls-bar">
+        <div class="preset-buttons">
+            <span class="preset-label"><i class="fa-solid fa-wand-magic-sparkles"></i> Curated Presets:</span>
+            <button type="button" class="btn-preset" onclick="loadPreset('bronze')">
+                <i class="fa-solid fa-shield"></i> Bronze Masterpiece
+            </button>
+            <button type="button" class="btn-preset" onclick="loadPreset('marble')">
+                <i class="fa-solid fa-monument"></i> Marble Monument
+            </button>
+            <button type="button" class="btn-preset" onclick="loadPreset('wood')">
+                <i class="fa-solid fa-tree"></i> Woodwork Carving
+            </button>
+            <button type="button" class="btn-preset reset-preset" onclick="resetForm()">
+                <i class="fa-solid fa-rotate-left"></i> Reset
+            </button>
+        </div>
+        <div class="progress-indicator">
+            <span class="progress-text" id="progressText">0 / 15 Specified</span>
+            <div class="progress-bar-container">
+                <div class="progress-bar-fill" id="progressBar"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Valuation Form -->
+    <form method="post" action="" id="sculptureForm">
+        {% csrf_token %}
+
+        <!-- Group 1: Artist & Reputation -->
+        <div class="form-category-card">
+            <div class="category-header">
+                <i class="fa-solid fa-palette"></i>
+                <h3>1. Artist Profile & Reputation</h3>
+                <span class="category-badge">2 Attributes</span>
+            </div>
+            <div class="fields-grid">
+                <div class="field-card">
+                    <label for="Name">
+                        <span>Artist Name</span>
+                        <span class="req-dot" id="dot-Name"></span>
+                    </label>
+                    <div class="input-wrapper">
+                        <input type="text" id="Name" name="Name" placeholder="e.g. Auguste Rodin" required value="{{ form_data.Name|default:'' }}">
+                    </div>
+                </div>
+
+                <div class="field-card">
+                    <label for="repute">
+                        <span>Artist Reputation Score (0.00 – 1.00)</span>
+                        <span class="req-dot" id="dot-repute"></span>
+                    </label>
+                    <div class="input-wrapper">
+                        <input type="number" id="repute" name="repute" step="0.01" min="0" max="1" placeholder="e.g. 0.75" required value="{{ form_data.repute|default:'' }}">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Group 2: Physical Dimensions & Weight -->
+        <div class="form-category-card">
+            <div class="category-header">
+                <i class="fa-solid fa-ruler-combined"></i>
+                <h3>2. Physical Dimensions & Mass</h3>
+                <span class="category-badge">3 Attributes</span>
+            </div>
+            <div class="fields-grid">
+                <div class="field-card">
+                    <label for="Height">
+                        <span>Height (meters)</span>
+                        <span class="req-dot" id="dot-Height"></span>
+                    </label>
+                    <div class="input-wrapper">
+                        <input type="number" id="Height" name="Height" step="0.1" min="0.1" max="52" placeholder="e.g. 1.8" required value="{{ form_data.Height|default:'' }}">
+                    </div>
+                </div>
+
+                <div class="field-card">
+                    <label for="Width">
+                        <span>Width (meters)</span>
+                        <span class="req-dot" id="dot-Width"></span>
+                    </label>
+                    <div class="input-wrapper">
+                        <input type="number" id="Width" name="Width" step="0.1" min="0.1" max="21" placeholder="e.g. 0.8" required value="{{ form_data.Width|default:'' }}">
+                    </div>
+                </div>
+
+                <div class="field-card">
+                    <label for="Weight">
+                        <span>Weight (grams)</span>
+                        <span class="req-dot" id="dot-Weight"></span>
+                    </label>
+                    <div class="input-wrapper">
+                        <input type="number" id="Weight" name="Weight" step="1" min="1" placeholder="e.g. 8500" required value="{{ form_data.Weight|default:'' }}">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Group 3: Material & Pricing -->
+        <div class="form-category-card">
+            <div class="category-header">
+                <i class="fa-solid fa-coins"></i>
+                <h3>3. Medium, Base Price & Shipping Baseline</h3>
+                <span class="category-badge">3 Attributes</span>
+            </div>
+            <div class="fields-grid">
+                <div class="field-card">
+                    <label for="material">
+                        <span>Primary Material</span>
+                        <span class="req-dot" id="dot-material"></span>
+                    </label>
+                    <div class="select-wrapper">
+                        <select id="material" name="material" required>
+                            <option value="">Select medium...</option>
+                            <option value="0">Aluminium</option>
+                            <option value="1">Brass</option>
+                            <option value="2">Bronze</option>
+                            <option value="3">Clay</option>
+                            <option value="4">Marble</option>
+                            <option value="5">Stone</option>
+                            <option value="6">Wood</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down arrow-icon"></i>
+                    </div>
+                </div>
+
+                <div class="field-card">
+                    <label for="basePrice">
+                        <span>Base Sculpture Price ($ USD)</span>
+                        <span class="req-dot" id="dot-basePrice"></span>
+                    </label>
+                    <div class="input-wrapper">
+                        <input type="number" id="basePrice" name="basePrice" step="0.01" min="0.01" placeholder="e.g. 2500.00" required value="{{ form_data.basePrice|default:'' }}">
+                    </div>
+                </div>
+
+                <div class="field-card">
+                    <label for="basePriceShipping">
+                        <span>Base Shipping Rate ($ USD)</span>
+                        <span class="req-dot" id="dot-basePriceShipping"></span>
+                    </label>
+                    <div class="input-wrapper">
+                        <input type="number" id="basePriceShipping" name="basePriceShipping" step="0.01" min="0.01" placeholder="e.g. 150.00" required value="{{ form_data.basePriceShipping|default:'' }}">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Group 4: Logistics & Client Specifications -->
+        <div class="form-category-card">
+            <div class="category-header">
+                <i class="fa-solid fa-truck-fast"></i>
+                <h3>4. Transit, Handling & Logistics</h3>
+                <span class="category-badge">7 Attributes</span>
+            </div>
+            <div class="fields-grid">
+                <div class="field-card">
+                    <label for="Transport">
+                        <span>Transport Mode</span>
+                        <span class="req-dot" id="dot-Transport"></span>
+                    </label>
+                    <div class="select-wrapper">
+                        <select id="Transport" name="Transport" required>
+                            <option value="0">Airways</option>
+                            <option value="1">Roadways</option>
+                            <option value="2">Waterways</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down arrow-icon"></i>
+                    </div>
+                </div>
+
+                <div class="field-card">
+                    <label for="international">
+                        <span>International Freight</span>
+                        <span class="req-dot" id="dot-international"></span>
+                    </label>
+                    <div class="select-wrapper">
+                        <select id="international" name="international" required>
+                            <option value="0">Domestic (No)</option>
+                            <option value="1">International (Yes)</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down arrow-icon"></i>
+                    </div>
+                </div>
+
+                <div class="field-card">
+                    <label for="expressShipment">
+                        <span>Express Shipment Priority</span>
+                        <span class="req-dot" id="dot-expressShipment"></span>
+                    </label>
+                    <div class="select-wrapper">
+                        <select id="expressShipment" name="expressShipment" required>
+                            <option value="0">Standard Delivery (No)</option>
+                            <option value="1">Express Priority (Yes)</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down arrow-icon"></i>
+                    </div>
+                </div>
+
+                <div class="field-card">
+                    <label for="installments">
+                        <span>Installation Included</span>
+                        <span class="req-dot" id="dot-installments"></span>
+                    </label>
+                    <div class="select-wrapper">
+                        <select id="installments" name="installments" required>
+                            <option value="0">Client Self-Install (No)</option>
+                            <option value="1">Professional Install (Yes)</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down arrow-icon"></i>
+                    </div>
+                </div>
+
+                <div class="field-card">
+                    <label for="Fragile">
+                        <span>Fragility Classification</span>
+                        <span class="req-dot" id="dot-Fragile"></span>
+                    </label>
+                    <div class="select-wrapper">
+                        <select id="Fragile" name="Fragile" required>
+                            <option value="0">Standard Durability</option>
+                            <option value="1">Highly Fragile</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down arrow-icon"></i>
+                    </div>
+                </div>
+
+                <div class="field-card">
+                    <label for="cust">
+                        <span>Customer Profile</span>
+                        <span class="req-dot" id="dot-cust"></span>
+                    </label>
+                    <div class="select-wrapper">
+                        <select id="cust" name="cust" required>
+                            <option value="0">High Net Worth / Gallery</option>
+                            <option value="1">Working Class / Individual</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down arrow-icon"></i>
+                    </div>
+                </div>
+
+                <div class="field-card">
+                    <label for="remote">
+                        <span>Destination Geography</span>
+                        <span class="req-dot" id="dot-remote"></span>
+                    </label>
+                    <div class="select-wrapper">
+                        <select id="remote" name="remote" required>
+                            <option value="0">Metropolitan (Standard)</option>
+                            <option value="1">Remote / Isolated Location</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down arrow-icon"></i>
+                    </div>
+                </div>
+
+                <div class="field-card">
+                    <label for="waiting">
+                        <span>Waiting Time (Days)</span>
+                        <span class="req-dot" id="dot-waiting"></span>
+                    </label>
+                    <div class="input-wrapper">
+                        <input type="number" id="waiting" name="waiting" step="1" min="0" placeholder="e.g. 5" required value="{{ form_data.waiting|default:'5' }}">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sticky Floating Bottom Dock -->
+        <div class="action-dock">
+            <div class="dock-info">
+                <div class="dock-indicator" id="dockIndicator"></div>
+                <div class="dock-text">
+                    <span id="dockStatus">Complete all fields for appraisal</span>
+                </div>
+            </div>
+            <button type="submit" class="submit-btn" id="submitBtn">
+                <i class="fa-solid fa-calculator"></i>
+                <span>Calculate Cost Estimate</span>
+            </button>
+        </div>
+    </form>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        <p>&copy; 2026 SculptPrice AI — Powered by Scikit-Learn Random Forest Regression &amp; Django.</p>
+    </footer>
+</div>
+
+<script>
+    const presets = {
+        bronze: {
+            Name: 'Auguste Rodin',
+            repute: '0.85',
+            Height: '1.8',
+            Width: '0.9',
+            Weight: '12500',
+            material: '2', // Bronze
+            basePrice: '2800',
+            basePriceShipping: '180',
+            Transport: '0', // Airways
+            international: '1',
+            expressShipment: '1',
+            installments: '1',
+            Fragile: '1',
+            cust: '0',
+            remote: '0',
+            waiting: '4'
+        },
+        marble: {
+            Name: 'Michelangelo Studio',
+            repute: '0.95',
+            Height: '2.4',
+            Width: '1.4',
+            Weight: '24000',
+            material: '4', // Marble
+            basePrice: '3800',
+            basePriceShipping: '350',
+            Transport: '1', // Roadways
+            international: '0',
+            expressShipment: '0',
+            installments: '1',
+            Fragile: '1',
+            cust: '0',
+            remote: '1',
+            waiting: '10'
+        },
+        wood: {
+            Name: 'Elena Rostova',
+            repute: '0.62',
+            Height: '1.2',
+            Width: '0.6',
+            Weight: '4200',
+            material: '6', // Wood
+            basePrice: '950',
+            basePriceShipping: '65',
+            Transport: '1', // Roadways
+            international: '0',
+            expressShipment: '0',
+            installments: '0',
+            Fragile: '0',
+            cust: '1',
+            remote: '0',
+            waiting: '3'
+        }
+    };
+
+    function updateProgress() {
+        const form = document.getElementById('sculptureForm');
+        const inputs = form.querySelectorAll('input[required], select[required]');
+        let filledCount = 0;
+
+        inputs.forEach(input => {
+            const dot = document.getElementById('dot-' + input.id);
+            if (input.value.trim() !== '') {
+                filledCount++;
+                if (dot) dot.classList.add('filled');
+            } else {
+                if (dot) dot.classList.remove('filled');
+            }
+        });
+
+        const total = inputs.length;
+        const percent = Math.round((filledCount / total) * 100);
+
+        document.getElementById('progressText').textContent = `${filledCount} / ${total} Specified`;
+        document.getElementById('progressBar').style.width = `${percent}%`;
+
+        const indicator = document.getElementById('dockIndicator');
+        const dockStatus = document.getElementById('dockStatus');
+
+        if (filledCount === total) {
+            indicator.classList.add('ready');
+            dockStatus.innerHTML = `All <strong>15 characteristics</strong> ready for ML evaluation`;
+        } else {
+            indicator.classList.remove('ready');
+            dockStatus.innerHTML = `<strong>${total - filledCount} remaining</strong> attributes to specify`;
+        }
+    }
+
+    function loadPreset(key) {
+        const data = presets[key];
+        if (!data) return;
+
+        Object.keys(data).forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.value = data[id];
+            }
+        });
+
+        updateProgress();
+        submitFormAjax();
+    }
+
+    function resetForm() {
+        document.getElementById('sculptureForm').reset();
+        const resultSec = document.getElementById('resultContainer');
+        if (resultSec) resultSec.classList.remove('active');
+        const serverAlert = document.getElementById('serverAlert');
+        if (serverAlert) serverAlert.style.display = 'none';
+        updateProgress();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    async function submitFormAjax() {
+        const form = document.getElementById('sculptureForm');
+        const formData = new FormData(form);
+        const submitBtn = document.getElementById('submitBtn');
+        const originalBtnHtml = submitBtn.innerHTML;
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Calculating...</span>`;
+
+        try {
+            const response = await fetch(window.location.href, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                renderResult(data.predicted_cost, data.artist_name);
+            } else {
+                const data = await response.json().catch(() => null);
+                if (data && data.error_message) {
+                    alert(data.error_message);
+                } else {
+                    form.submit();
+                }
+            }
+        } catch (err) {
+            console.error('AJAX request failed, falling back:', err);
+            form.submit();
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnHtml;
+        }
+    }
+
+    function renderResult(cost, artistName) {
+        const container = document.getElementById('resultContainer');
+        const valElem = document.getElementById('resultValue');
+        const descElem = document.getElementById('resultDescription');
+
+        const formatted = Number(cost).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        valElem.textContent = `$${formatted} USD`;
+
+        if (artistName) {
+            descElem.innerHTML = `Computed appraisal for custom sculpture by <strong>${artistName}</strong>, accounting for materials, weight, transport logistics, handling, and artist reputation factor.`;
+        }
+
+        container.classList.add('active');
+        container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const inputs = document.querySelectorAll('#sculptureForm input, #sculptureForm select');
+        inputs.forEach(inp => {
+            inp.addEventListener('input', updateProgress);
+            inp.addEventListener('change', updateProgress);
+        });
+
+        updateProgress();
+
+        document.getElementById('sculptureForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            submitFormAjax();
+        });
+    });
+</script>
+
+</body>
+</html>
